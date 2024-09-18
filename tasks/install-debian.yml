@@ -1,0 +1,85 @@
+---
+- name: MOTD - Finding motd scripts
+  find:
+    paths: /etc/update-motd.d
+    #patterns: "*"
+    follow: yes
+    file_type: any
+  register: motd_scripts
+
+- name: MOTD - Disable scripts
+  file:
+    path: "{{item.path}}"
+    mode: 0664
+  when: item.path in motd_disable_scripts
+  with_items: "{{ motd_scripts.files }}"
+  loop_control: 
+    label: "{{ item.path }}"
+
+- name: MOTD - Disable scripts
+  file:
+    path: "{{item.path}}"
+    mode: 0755
+  when: item.path in motd_enable_scripts
+  with_items: "{{ motd_scripts.files }}"
+  loop_control: 
+    label: "{{ item.path }}"
+
+- name: MOTD - Add 99-footer file
+  copy:
+    src: 99-footer
+    dest: /etc/update-motd.d/99-footer
+    owner: root
+    group: root
+    mode: 0755
+  when: 
+    - motd_force_99_footer
+    - ansible_os_family == "Debian"
+
+- name: MOTD - Check footer_99 support
+  stat: 
+    path: /etc/update-motd.d/99-footer
+  register: motd_tail_supported
+
+- name: Add motd tail
+  template:
+    src: etc/motd.j2
+    dest: /etc/motd.tail
+  when: motd_tail_supported is success
+
+- name: MOTD - Delete /etc/motd file when tail is supported
+  file:
+    path: /etc/motd
+    state: absent
+  when: motd_tail_supported is success
+
+
+
+
+##################################
+
+
+#- name: Delete 99-footer file
+#  file:
+#    path: /etc/update-motd.d/99-footer
+#    state: absent
+#  when: not ag_motd_add_footer
+#  tags: [ 'motd', 'common' ]
+#
+
+
+#
+#- name: Add motd tail
+#  template:
+#    src: etc/motd.j2
+#    dest: /etc/motd.tail
+#  when: motd_tail_supported is success
+#  tags: [ 'motd', 'common' ]
+#
+#- name: Add motd
+#  template:
+#    src: etc/motd.j2
+#    dest: /etc/motd
+#  when: motd_tail_supported is failed
+#  tags: [ 'motd', 'common' ]
+#

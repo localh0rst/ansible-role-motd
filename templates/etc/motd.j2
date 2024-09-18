@@ -1,0 +1,54 @@
+
+{% if motd_show_prefix %}
+{{ motd_prefix }}
+{% endif %}
+{% if motd_show_logo %}
+                      [31;1mManaged by[0m
+              [32;1m_              _ _     _
+             / \   _ __  ___(_) |__ | | ___
+            / _ \ | '_ \/ __| | '_ \| |/ _ \
+           / ___ \| | | \__ \ | |_) | |  __/
+          /_/   \_\_| |_|___/_|_.__/|_|\___|[0m
+{% endif %}
+
+{% if motd_show_smiley %}
+                      [1m¯\_(ツ)_/¯[0m
+{% endif %}
+
+{% if motd_show_sysinfo %}
+------------------------------------------------------
+                  System Information
+------------------------------------------------------
+FQDN: [1m{{ ansible_fqdn }}[0m ({{ ansible_hostname }})
+{% if ansible_distribution == "Ubuntu" and (ansible_distribution_major_version|int >= 18 or ansible_distribution_major_version|int == 16) %}
+OS  : [32m{{ ansible_distribution }} {{ ansible_distribution_version }}[0m ({{ ansible_distribution_release }})
+{% elif ansible_distribution == "Ubuntu" and ansible_distribution_major_version|int == 14 %}
+OS  : [33m{{ ansible_distribution }} {{ ansible_distribution_version }}[0m ({{ ansible_distribution_release }})
+{% elif ansible_distribution == "Ubuntu" and ansible_distribution_major_version|int < 14 %}
+OS  : [31m{{ ansible_distribution }} {{ ansible_distribution_version }}[0m ({{ ansible_distribution_release }})
+{% endif -%} 
+{% if ansible_all_ipv4_addresses|length >= 1 %}
+IPv4: {{ ansible_all_ipv4_addresses | join("\n      ") }}
+{% else %}
+IPv4: None
+{% endif %}
+{% if ansible_all_ipv6_addresses | length >= 1 %}
+IPv6: {{ ansible_all_ipv6_addresses | join("\n      ") }}
+{% else %}
+IPv6: None
+{% endif %}
+{% if description is defined %}
+DESC: {{description}}
+{% endif %}
+{% if motd_show_last_run %}
+PROV: {{ ansible_date_time.iso8601 }} by {{ ansible_env.SUDO_USER }}
+{% endif %}
+{% if motd_additional_sysinfo|length >= 1 %}
+{% for item in motd_additional_sysinfo %}
+{% for key, value in item.items() | list %}
+{{ key }}: {{ value }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+------------------------------------------------------
+{% endif %} 
